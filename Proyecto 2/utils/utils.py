@@ -9,3 +9,6 @@ class Operation:
         self.stop_loss = stop_loss
         self.take_profit = take_profit
 
+
+
+

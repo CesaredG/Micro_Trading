@@ -138,9 +138,10 @@ for i, row in df_5m.iterrows():
     total_value = len(active_operations) * row.Close * n_shares
     strategy_value.append(cash + total_value)
 
-print(strategy_value)
 plt.figure(figsize=(12, 4))
 plt.title('First Trading Strategy')
 plt.plot(strategy_value)
 plt.legend()
 plt.show()
+
+
