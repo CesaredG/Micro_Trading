@@ -1,4 +1,3 @@
-pip install python==3.11.5
 ta
 matplotlib
 gitdb==4.0.10
