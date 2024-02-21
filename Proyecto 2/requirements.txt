@@ -1,13 +1,8 @@
 pip install python==3.11.5
+ta
+matplotlib
 gitdb==4.0.10
-importlib-metadata @ file:///Users/builder/miniconda3/envs/prefect/conda-bld/importlib-metadata_1638777154045/work
 ipykernel==6.25.2
-ipython @ file:///Users/builder/miniconda3/envs/prefect/conda-bld/ipython_1635944760326/work
-ipython-genutils @ file:///tmp/build/80754af9/ipython_genutils_1606773439826/work
-jsonschema @ file:///Users/ktietz/demo/mc3/conda-bld/jsonschema_1630511932244/work
 lxml==4.9.3
-Markdown @ file:///Users/ktietz/demo/mc3/conda-bld/markdown_1629712599908/work
-markdown-it-py==3.0.0MarkupSafe @ file:///Users/ktietz/demo/mc3/conda-bld/markupsafe_1629137411893/work
-matplotlib-inline @ file:///tmp/build/80754af9/matplotlib-inline_1628242447089/work
 numpy==1.25.2
 pandas==2.1.0

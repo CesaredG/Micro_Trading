@@ -108,27 +108,32 @@ for i, row in df_5m.iterrows():
         elif row.Long_SMA < row.Short_SMA:
             sma_sell_signal = False
 
+        # Assigning SMA signal to DataFrame
+        df_5m.loc[i, 'SMA_buy'] = sma_buy_signal
+        df_5m.loc[i, 'SMA_sell'] = sma_sell_signal
 
 
-        # # Buy Signal if RSI < 30
-        # if row.RSI < 30:
-        #     active_operations.append(Operation(operation_type='Long',
-        #                                         bought_at=row.Close,
-        #                                         timestamp=row.Timestamp,
-        #                                         n_shares=n_shares,
-        #                                         stop_loss=(row.Close * .95),
-        #                                         take_profit=(row.Close * 1.05)))
-        #     cash -= row.Close * n_shares * (1 + com)
-        #
-        # # Sell Signal if RSI > 75
-        # if row.RSI < 30:
-        #     active_operations.append(Operation(operation_type='Short',
-        #                                        bought_at=row.Close,
-        #                                        timestamp=row.Timestamp,
-        #                                        n_shares=n_shares,
-        #                                        stop_loss=(row.Close * 1.05),
-        #                                        take_profit=(row.Close * .95)))
-        #     cash += row.Close * n_shares * (1 - com)
+        # Buy Signal if RSI < 30
+        if row.RSI < 30:
+            active_operations.append(Operation(operation_type='Long',
+                                                bought_at=row.Close,
+                                                timestamp=row.Timestamp,
+                                                n_shares=n_shares,
+                                                stop_loss=(row.Close * .95),
+                                                take_profit=(row.Close * 1.05)))
+            cash -= row.Close * n_shares * (1 + com)
+        df_5m.loc[i, 'RSI'] = True
+
+        # Sell Signal if RSI > 75
+        if row.RSI < 30:
+            active_operations.append(Operation(operation_type='Short',
+                                               bought_at=row.Close,
+                                               timestamp=row.Timestamp,
+                                               n_shares=n_shares,
+                                               stop_loss=(row.Close * 1.05),
+                                               take_profit=(row.Close * .95)))
+            cash += row.Close * n_shares * (1 - com)
+        df_5m.loc[i, 'RSI'] = False
 
     # Cuando no tenemos dinero
     else:
@@ -138,6 +143,7 @@ for i, row in df_5m.iterrows():
     total_value = len(active_operations) * row.Close * n_shares
     strategy_value.append(cash + total_value)
 
+print(df_5m)
 plt.figure(figsize=(12, 4))
 plt.title('First Trading Strategy')
 plt.plot(strategy_value)
