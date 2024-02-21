@@ -71,11 +71,7 @@ for i, row in df_5m.iterrows():
         # See if buy signal has changed
         if (row.Long_SMA < row.Short_SMA) and sma_buy_signal == False:
             sma_buy_signal = True
-            # if op.operation_type == 'Short':
-            #     # Calculate commission and update cash
-            #     cash -= row.Close * op.n_shares * (1 + com)
-            #     # Remove operation from active_operations
-            #     active_operations.remove(op)
+
             # Buy
             active_operations.append(Operation(operation_type='Long',
                                                 bought_at=row.Close,
@@ -91,11 +87,7 @@ for i, row in df_5m.iterrows():
         # See if sell signal has changed
         if (row.Long_SMA > row.Short_SMA) and sma_sell_signal == False:
             sma_sell_signal = True
-            # if op.operation_type == 'Long':
-            #     # Calculate commission and update cash
-            #     cash += row.Close * op.n_shares * (1 - com)
-            #     # Remove operation from active_operations
-            #     active_operations.remove(op)
+
             # Sell
             active_operations.append(Operation(operation_type='Short',
                                                bought_at=row.Close,
