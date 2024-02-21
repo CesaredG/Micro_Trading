@@ -1,3 +1,4 @@
+from proyecto_2.utils.EWMA import EWMA
 from utils.RSI import RSI
 from utils.SMA import SMA
 import pandas as pd
@@ -38,4 +39,13 @@ plt.plot(strategy_value_5m)
 plt.legend()
 plt.show()
 
+# Creamos una instancia de EWMA para el DataFrame df_5m
+ewma_5m = EWMA(df_5m, cash, active_operations, com, strategy_value, n_shares)
+df_5m_result, strategy_value_5m = ewma_5m.run_strategy()
 
+print(df_5m_result)
+plt.figure(figsize=(12, 4))
+plt.title('EWMA Trading Strategy')
+plt.plot(strategy_value_5m)
+plt.legend()
+plt.show()
