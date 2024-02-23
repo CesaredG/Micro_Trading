@@ -1,4 +1,4 @@
-from proyecto_2.utils.EWMA import EWMA
+from utils.EWMA import EWMA
 from utils.RSI import RSI
 from utils.SMA import SMA
 import pandas as pd
