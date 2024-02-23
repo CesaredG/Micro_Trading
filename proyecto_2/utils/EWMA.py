@@ -1,4 +1,4 @@
-from utils import Operation
+from .utils import Operation
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,6 +22,12 @@ class EWMA:
 
         self.ewma_sell_signal = self.df.iloc[0].Long_EWMA > self.df.iloc[0].Short_EWMA
         self.ewma_buy_signal = self.df.iloc[0].Long_EWMA < self.df.iloc[0].Short_EWMA
+
+    def get_buy_signal(self):
+        ...
+    
+    def get_sell_signal(self):
+        ...
 
     def run_strategy(self):
         for i, row in self.df.iterrows():

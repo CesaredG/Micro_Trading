@@ -21,7 +21,7 @@ def objective(trial):
     return profit
 
 study = optuna.create_study(direction='maximize')
-study.optimize(objective, n_trials=100)
+study.optimize(objective, n_trials=5)
 
 # Get the best parameters and their corresponding value
 best_params = study.best_params

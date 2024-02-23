@@ -1,4 +1,4 @@
-from utils import Operation
+from .utils import Operation
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
