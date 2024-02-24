@@ -18,7 +18,7 @@ class EWMA:
         long_ema = ta.trend.EMAIndicator(self.df.Close, window=32)
         self.df['Short_EWMA'] = short_ema.ema_indicator()
         self.df['Long_EWMA'] = long_ema.ema_indicator()
-        self.df = self.df.dropna()
+        self.df = self.df
 
         self.ewma_sell_signal = self.df.iloc[0].Long_EWMA > self.df.iloc[0].Short_EWMA
         self.ewma_buy_signal = self.df.iloc[0].Long_EWMA < self.df.iloc[0].Short_EWMA
@@ -35,16 +35,22 @@ class EWMA:
             # Close Operations
             temp_operations = []
             for op in self.active_operations:
-
-                if op.stop_loss > row.Close:  # Close losing operations
-                    self.cash += row.Close * op.n_shares * (1 - self.com)
-
-                elif op.take_profit < row.Close:  # Close profits
-                    self.cash += row.Close * op.n_shares * (1 - self.com)
-                else:
-                    temp_operations.append(op)
+                if op.operation_type == 'Long':
+                    if op.stop_loss > row.Close:  # Close losing operations
+                        self.cash += row.Close * op.n_shares * (1 - self.com)
+                    elif op.take_profit < row.Close:  # Close profits
+                        self.cash += row.Close * op.n_shares * (1 - self.com)
+                    else:
+                        temp_operations.append(op)
+                elif op.operation_type == 'Short':
+                    if op.stop_loss < row.Close:  # Close losing operations
+                        self.cash -= row.Close * op.n_shares * (1 + self.com)
+                    elif op.take_profit > row.Close:  # Close profits
+                        self.cash -= row.Close * op.n_shares * (1 + self.com)
+                    else:
+                        temp_operations.append(op)
             self.active_operations = temp_operations
-
+            
             # Do we have enough cash?
             if self.cash > row.Close * self.n_shares * (1 + self.com):
                 # See if buy signal has changed
@@ -76,8 +82,12 @@ class EWMA:
                     self.ewma_sell_signal = False
 
                 # Assigning EWMA signal to DataFrame
-                self.df.loc[i, 'EWMA_buy'] = int(self.ewma_buy_signal)
-                self.df.loc[i, 'EWMA_sell'] = int(self.ewma_sell_signal)
+                # Create a new DataFrame for signals if it doesn't exist
+                if not hasattr(self, 'signals_df'):
+                    self.signals_df = pd.DataFrame(index=self.df.index, columns=['EWMA_buy', 'EWMA_sell'])
+
+                self.signals_df.loc[i, 'EWMA_buy'] = int(self.ewma_buy_signal)
+                self.signals_df.loc[i, 'EWMA_sell'] = int(self.ewma_sell_signal)
 
             # Cuando no tenemos dinero
             else:
@@ -87,4 +97,4 @@ class EWMA:
             total_value = len(self.active_operations) * row.Close * self.n_shares
             self.strategy_value.append(self.cash + total_value)
 
-        return self.df, self.strategy_value
+        return self.signals_df, self.strategy_value

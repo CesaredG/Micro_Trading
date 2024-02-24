@@ -1,6 +1,6 @@
-from .utils.EWMA import EWMA
-from .utils.RSI import RSI
-from .utils.SMA import SMA
+from utils.EWMA import EWMA
+from utils.RSI import RSI
+from utils.SMA import SMA
 import pandas as pd
 import matplotlib.pyplot as plt
 

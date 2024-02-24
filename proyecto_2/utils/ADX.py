@@ -21,16 +21,25 @@ class ADXStrategy:
     def run_strategy(self):
         for i, row in self.df.iterrows():
 
-            # Cerrar operaciones
+            # Close Operations
             temp_operations = []
             for op in self.active_operations:
-                if op.stop_loss > row['Close']:  # Cerrar operaciones perdedoras
-                    self.cash += row['Close'] * op.n_shares * (1 - self.com)
-                elif op.take_profit < row['Close']:  # Cerrar operaciones rentables
-                    self.cash += row['Close'] * op.n_shares * (1 - self.com)
-                else:
-                    temp_operations.append(op)
+                if op.operation_type == 'Long':
+                    if op.stop_loss > row.Close:  # Close losing operations
+                        self.cash += row.Close * op.n_shares * (1 - self.com)
+                    elif op.take_profit < row.Close:  # Close profits
+                        self.cash += row.Close * op.n_shares * (1 - self.com)
+                    else:
+                        temp_operations.append(op)
+                elif op.operation_type == 'Short':
+                    if op.stop_loss < row.Close:  # Close losing operations
+                        self.cash -= row.Close * op.n_shares * (1 + self.com)
+                    elif op.take_profit > row.Close:  # Close profits
+                        self.cash -= row.Close * op.n_shares * (1 + self.com)
+                    else:
+                        temp_operations.append(op)
             self.active_operations = temp_operations
+
 
             # Comprar si hay señal de compra de ADX
             if (self.cash > row['Close'] * self.n_shares * (1 + self.com)) and self.adx_buy_signal:

@@ -17,27 +17,33 @@ class RSI:
         rsi_data = ta.momentum.RSIIndicator(close=self.df.Close, window=14)
         self.df['RSI'] = rsi_data.rsi()
         # Eliminamos las primeras 14 rows ya que como es nuestra ventana, aparecen las primeras 14 como nan
-        self.df = self.df.dropna()
+        self.df = self.df
 
         self.rsi_sell_signal = False
         self.rsi_buy_signal = False
 
     def run_strategy(self):
         for i, row in self.df.iterrows():
+
             # Close Operations
             temp_operations = []
-
             for op in self.active_operations:
-
-                if op.stop_loss > row.Close:  # Close losing operations
-                    self.cash += row.Close * op.n_shares * (1 - self.com)
-
-                elif op.take_profit < row.Close:  # Close profits
-                    self.cash += row.Close * op.n_shares * (1 - self.com)
-                else:
-                    temp_operations.append(op)
+                if op.operation_type == 'Long':
+                    if op.stop_loss > row.Close:  # Close losing operations
+                        self.cash += row.Close * op.n_shares * (1 - self.com)
+                    elif op.take_profit < row.Close:  # Close profits
+                        self.cash += row.Close * op.n_shares * (1 - self.com)
+                    else:
+                        temp_operations.append(op)
+                elif op.operation_type == 'Short':
+                    if op.stop_loss < row.Close:  # Close losing operations
+                        self.cash -= row.Close * op.n_shares * (1 + self.com)
+                    elif op.take_profit > row.Close:  # Close profits
+                        self.cash -= row.Close * op.n_shares * (1 + self.com)
+                    else:
+                        temp_operations.append(op)
             self.active_operations = temp_operations
-
+            
             # Do we have enough cash?
             if self.cash > row.Close * self.n_shares * (1 + self.com):
 
@@ -55,7 +61,7 @@ class RSI:
 
                 elif row.RSI >= 30:
                     self.rsi_buy_signal = False
-                    self.df.loc[i, 'RSI_buy'] = False
+                    
 
                 # Sell Signal if RSI > 75
                 if row.RSI > 75 and not self.rsi_sell_signal:
@@ -67,10 +73,17 @@ class RSI:
                                                              stop_loss=(row.Close * 1.05),
                                                              take_profit=(row.Close * .95)))
                     self.cash += row.Close * self.n_shares * (1 - self.com)
-                    self.df.loc[i, 'RSI_sell'] = True
+                    
                 elif row.RSI <= 75:
                     self.rsi_sell_signal = False
-                    self.df.loc[i, 'RSI_sell'] = False
+                
+                #DATAframe con las señales de compra y venta
+                if not hasattr(self, 'signals_df'):
+                    self.signals_df = pd.DataFrame(index=self.df.index, columns=['RSI_buy', 'RSI_sell'])
+
+                self.signals_df.loc[i, 'RSI_buy'] = int(self.rsi_buy_signal)
+                self.signals_df.loc[i, 'RSI_sell'] = int(self.rsi_sell_signal)
+                    
 
             # Cuando no tenemos dinero
             else:
@@ -80,4 +93,4 @@ class RSI:
             total_value = len(self.active_operations) * row.Close * self.n_shares
             self.strategy_value.append(self.cash + total_value)
 
-        return self.df, self.strategy_value
+        return self.signals_df, self.strategy_value

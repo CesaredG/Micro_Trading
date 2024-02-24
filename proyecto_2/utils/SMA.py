@@ -18,7 +18,7 @@ class SMA:
         long_ma = ta.trend.SMAIndicator(self.df.Close, window=25)
         self.df['Short_SMA'] = short_ma.sma_indicator()
         self.df['Long_SMA'] = long_ma.sma_indicator()
-        self.df = self.df.dropna()
+        self.df = self.df
 
         self.sma_sell_signal = self.df.iloc[0].Long_SMA > self.df.iloc[0].Short_SMA
         self.sma_buy_signal = self.df.iloc[0].Long_SMA < self.df.iloc[0].Short_SMA
@@ -29,16 +29,23 @@ class SMA:
             # Close Operations
             temp_operations = []
             for op in self.active_operations:
-
-                if op.stop_loss > row.Close:  # Close losing operations
-                    self.cash += row.Close * op.n_shares * (1 - self.com)
-
-                elif op.take_profit < row.Close:  # Close profits
-                    self.cash += row.Close * op.n_shares * (1 - self.com)
-                else:
-                    temp_operations.append(op)
+                if op.operation_type == 'Long':
+                    if op.stop_loss > row.Close:  # Close losing operations
+                        self.cash += row.Close * op.n_shares * (1 - self.com)
+                    elif op.take_profit < row.Close:  # Close profits
+                        self.cash += row.Close * op.n_shares * (1 - self.com)
+                    else:
+                        temp_operations.append(op)
+                elif op.operation_type == 'Short':
+                    if op.stop_loss < row.Close:  # Close losing operations
+                        self.cash -= row.Close * op.n_shares * (1 + self.com)
+                    elif op.take_profit > row.Close:  # Close profits
+                        self.cash -= row.Close * op.n_shares * (1 + self.com)
+                    else:
+                        temp_operations.append(op)
             self.active_operations = temp_operations
 
+            
             # Do we have enough cash?
             if self.cash > row.Close * self.n_shares * (1 + self.com):
                 # See if buy signal has changed
@@ -70,8 +77,12 @@ class SMA:
                     self.sma_sell_signal = False
 
                 # Assigning SMA signal to DataFrame
-                self.df.loc[i, 'SMA_buy'] = int(self.sma_buy_signal)
-                self.df.loc[i, 'SMA_sell'] = int(self.sma_sell_signal)
+                if not hasattr(self, 'signals_df'):
+                    self.signals_df = pd.DataFrame(index=self.df.index, columns=['SMA_buy', 'SMA_sell'])
+
+                self.signals_df.loc[i, 'SMA_buy'] = int(self.sma_buy_signal)
+                self.signals_df.loc[i, 'SMA_sell'] = int(self.sma_sell_signal)
+                
 
             # Cuando no tenemos dinero
             else:
@@ -81,4 +92,4 @@ class SMA:
             total_value = len(self.active_operations) * row.Close * self.n_shares
             self.strategy_value.append(self.cash + total_value)
 
-        return self.df, self.strategy_value
+        return self.signals_df, self.strategy_value
