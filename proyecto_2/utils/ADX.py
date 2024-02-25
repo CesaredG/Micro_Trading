@@ -71,7 +71,6 @@ class ADX:
 
                 self.signals_df.loc[i, 'ADX_buy_signal'] = int(self.adx_buy_signal)
                 self.signals_df.loc[i, 'ADX_sell_signal'] = int(self.adx_sell_signal)
-                self.signals_df.loc[i, 'cash'] = self.cash
 
             # Cuando no tenemos dinero
             else:
