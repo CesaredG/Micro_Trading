@@ -3,16 +3,22 @@ import pandas as pd
 import ta
 
 class ADX:
-    def __init__(self, df, cash, active_operations, com, strategy_value, n_shares):
+    def __init__(self, df, cash, active_operations, com, strategy_value, n_shares,adx_window, adx_trheshold,  stop_loss_long, take_profit_long, stop_loss_short, take_profit_short):
         self.df = df
         self.cash = cash
         self.active_operations = active_operations
         self.com = com
         self.strategy_value = strategy_value
         self.n_shares = n_shares
+        self.adx_window = adx_window
+        self.adx_trheshold = adx_trheshold
+        self.stop_loss_long = stop_loss_long
+        self.take_profit_long = take_profit_long
+        self.stop_loss_short = stop_loss_short
+        self.take_profit_short = take_profit_short
 
         # Initialize the ADX indicator
-        adx = ta.trend.ADXIndicator(df['High'], df['Low'], df['Close'], window=20)
+        adx = ta.trend.ADXIndicator(df['High'], df['Low'], df['Close'], window=self.adx_window)
         self.df['ADX'] = adx.adx()
 
         self.adx_buy_signal = False
@@ -42,36 +48,38 @@ class ADX:
             # Do we have enough cash?
             if self.cash > row.Close * self.n_shares * (1 + self.com):
                 # Buy Signal if ADX > 10 and there is no active signal
-                if row.ADX > 10 and not self.adx_buy_signal:
+                if row.ADX > self.adx_trheshold and not self.adx_buy_signal:
                     self.adx_buy_signal = True
                     self.adx_sell_signal = False
                     self.active_operations.append(Operation(operation_type='Long',
                                                              bought_at=row.Close,
                                                              timestamp=row.name,
                                                              n_shares=self.n_shares,
-                                                             stop_loss=(row.Close * .95),
-                                                             take_profit=(row.Close * 1.05)))
+                                                             stop_loss=(row.Close * self.stop_loss_long),
+                                                             take_profit=(row.Close * (1 + self.take_profit_long))))
                     self.cash -= row.Close * self.n_shares * (1 + self.com)
 
                 # Sell Signal if ADX < 10 and there is no active signal
-                elif row.ADX < 10 and not self.adx_sell_signal:
+                elif row.ADX < self.adx_trheshold and not self.adx_sell_signal:
                     self.adx_sell_signal = True
                     self.adx_buy_signal = False
                     self.active_operations.append(Operation(operation_type='Short',
                                                              bought_at=row.Close,
                                                              timestamp=row.name,
                                                              n_shares=self.n_shares,
-                                                             stop_loss=(row.Close * 1.05),
-                                                             take_profit=(row.Close * .95)))
+                                                             stop_loss=(row.Close * (1 + self.stop_loss_short)),
+                                                             take_profit=(row.Close * self.take_profit_short)))
                     self.cash += row.Close * self.n_shares * (1 - self.com)
 
                 # Update DataFrame with the signal
-                if not hasattr(self, 'signals_df'):
-                    self.signals_df = pd.DataFrame(index=self.df.index, columns=['ADX_buy_signal', 'ADX_sell_signal'])
+                if not hasattr(self, 'signals_df_buy'):
+                    self.signals_df_buy = pd.DataFrame(index=self.df.index, columns=['ADX_buy'])
+                if not hasattr(self, 'signals_df_sell'):
+                    self.signals_df_sell = pd.DataFrame(index=self.df.index, columns=['ADX_sell'])
 
-                self.signals_df.loc[i, 'ADX_buy_signal'] = int(self.adx_buy_signal)
-                self.signals_df.loc[i, 'ADX_sell_signal'] = int(self.adx_sell_signal)
-                self.signals_df.loc[i, 'cash'] = self.cash
+                self.signals_df_buy.loc[i, 'ADX_buy'] = int(self.adx_buy_signal)
+                self.signals_df_sell.loc[i, 'ADX_sell'] = int(self.adx_sell_signal)
+                
 
             # Cuando no tenemos dinero
             else:
@@ -81,4 +89,4 @@ class ADX:
             total_value = len(self.active_operations) * row.Close * self.n_shares
             self.strategy_value.append(self.cash + total_value)
 
-        return self.signals_df, self.strategy_value
+        return self.signals_df_buy, self.signals_df_sell, self.strategy_value

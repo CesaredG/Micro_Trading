@@ -5,16 +5,23 @@ import matplotlib.pyplot as plt
 import ta
 
 class STO:
-    def __init__(self, df, cash, active_operations, com, strategy_value, n_shares):
+    def __init__(self, df, cash, active_operations, com, strategy_value, n_shares, sto_window, stoch_upper_trheshold, stoch_lower_trheshold,stop_loss_long, take_profit_long, stop_loss_short, take_profit_short):
         self.df = df
         self.cash = cash
         self.active_operations = active_operations
         self.com = com
         self.strategy_value = strategy_value
         self.n_shares = n_shares
+        self.sto_window = sto_window
+        self.stoch_upper_trheshold = stoch_upper_trheshold
+        self.stoch_lower_trheshold = stoch_lower_trheshold
+        self.stop_loss_long = stop_loss_long
+        self.take_profit_long = take_profit_long
+        self.stop_loss_short = stop_loss_short
+        self.take_profit_short = take_profit_short
 
         # Add Stochastic Oscillator
-        stochastic_data = ta.momentum.StochasticOscillator(high=self.df.High, low=self.df.Low, close=self.df.Close)
+        stochastic_data = ta.momentum.StochasticOscillator(high=self.df.High, low=self.df.Low, close=self.df.Close, window=self.sto_window)
         self.df['%K'] = stochastic_data.stoch()
         self.df['%D'] = stochastic_data.stoch_signal()
 
@@ -47,47 +54,49 @@ class STO:
             # Do we have enough cash?
             if self.cash > row.Close * self.n_shares * (1 + self.com):
                 # See if buy signal has changed
-                if (row['%K'] < 30) and not self.stoch_buy_signal:
+                if (row['%K'] < self.stoch_lower_trheshold) and not self.stoch_buy_signal:
                     self.stoch_buy_signal = True
                     # Buy
                     self.active_operations.append(Operation(operation_type='Long',
                                                              bought_at=row.Close,
                                                              timestamp=row.Timestamp,
                                                              n_shares=self.n_shares,
-                                                             stop_loss=(row.Close * .95),
-                                                             take_profit=(row.Close * 1.05)))
+                                                             stop_loss=(row.Close * self.stop_loss_long),
+                                                             take_profit=(row.Close * (1 + self.take_profit_long))))
                     self.cash -= row.Close * self.n_shares * (1 + self.com)
-                elif row['%K'] >= 30:
+                elif row['%K'] >= self.stoch_lower_trheshold:
                     self.stoch_buy_signal = False
 
                 # See if sell signal has changed
-                if (row['%K'] > 70) and not self.stoch_sell_signal:
+                if (row['%K'] > self.stoch_upper_trheshold) and not self.stoch_sell_signal:
                     self.stoch_sell_signal = True
                     # Sell
                     self.active_operations.append(Operation(operation_type='Short',
                                                              bought_at=row.Close,
                                                              timestamp=row.Timestamp,
                                                              n_shares=self.n_shares,
-                                                             stop_loss=(row.Close * 1.05),
-                                                             take_profit=(row.Close * .95)))
+                                                             stop_loss=(row.Close * (1 + self.stop_loss_short)),
+                                                             take_profit=(row.Close * self.take_profit_short)))
                     self.cash += row.Close * self.n_shares * (1 - self.com)
-                elif row['%K'] <= 70:
+                elif row['%K'] <= self.stoch_upper_trheshold:
                     self.stoch_sell_signal = False
 
                 # Assigning Stochastic Oscillator signal to DataFrame
                 # Create a new DataFrame for signals if it doesn't exist
-                if not hasattr(self, 'signals_df'):
-                    self.signals_df = pd.DataFrame(index=self.df.index, columns=['Stoch_buy', 'Stoch_sell'])
+                if not hasattr(self, 'signals_df_buy'):
+                    self.signals_df_buy = pd.DataFrame(index=self.df.index, columns=['STOCH_buy'])
+                if not hasattr(self, 'signals_df_sell'):
+                    self.signals_df_sell = pd.DataFrame(index=self.df.index, columns=['STOCH_sell'])
 
-                self.signals_df.loc[i, 'Stoch_buy'] = int(self.stoch_buy_signal)
-                self.signals_df.loc[i, 'Stoch_sell'] = int(self.stoch_sell_signal)
+                self.signals_df_buy.loc[i, 'STOCH_buy'] = int(self.stoch_buy_signal)
+                self.signals_df_sell.loc[i, 'STOCH_sell'] = int(self.stoch_sell_signal)
 
             # Cuando no tenemos dinero
             else:
-                print('No Money No Honey')
+                pass
 
             # Calculate open positions value
             total_value = len(self.active_operations) * row.Close * self.n_shares
             self.strategy_value.append(self.cash + total_value)
 
-        return self.signals_df, self.strategy_value
+        return self.signals_df_buy, self.signals_df_sell, self.strategy_value
