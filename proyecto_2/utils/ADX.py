@@ -1,7 +1,8 @@
 from ta.trend import ADXIndicator
 from .utils import Operation
 
-class ADXStrategy:
+#Average Directional Index
+class ADX:
     def __init__(self, df, cash, active_operations, com, strategy_value, n_shares):
         self.df = df
         self.cash = cash
@@ -14,7 +15,7 @@ class ADXStrategy:
         adx = ADXIndicator(df['High'], df['Low'], df['Close'], window=14)
         self.df['ADX'] = adx.adx()
 
-        # Inicializar señales de compra y venta
+        # Inicializar señales de compra y venta (El threshold tiene que ser el mismo en ambas señales)
         self.adx_buy_signal = (self.df.iloc[0]['ADX'] > 25)
         self.adx_sell_signal = (self.df.iloc[0]['ADX'] < 25)
 

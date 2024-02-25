@@ -1,7 +1,7 @@
 from itertools import combinations
 import optuna
 
-indicadores = ['RSI', 'EWMA', 'SMA', 'indicador_4', 'indicador_5']
+indicadores = ['RSI', 'EWMA', 'SMA', 'ADX', 'indicador_5']
 
 combinaciones_indicadores = []
 for i in range(1, len(indicadores) + 1):
