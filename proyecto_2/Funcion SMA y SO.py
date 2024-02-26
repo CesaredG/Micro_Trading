@@ -1,9 +1,10 @@
 import pandas as pd
-from utils.SMA import SMA
-from utils.STO import STO
+
+from .utils.SMA import SMA
+from .utils.SO import STO
 
 # Carga de datos
-df_5m = pd.read_csv('./proyecto_2/data/aapl_5m_train.csv')
+df_5m = pd.read_csv('./proyecto_2/data/aapl_1h_test.csv')
 
 # Parámetros predefinidos
 params = {
